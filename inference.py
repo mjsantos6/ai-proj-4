@@ -153,13 +153,16 @@ class ExactInference(InferenceModule):
         # Replace this code with a correct observation update
         # Be sure to handle the "jail" edge case where the ghost is eaten
         # and noisyDistance is None
-        allPossible = self.beliefs
+ allPossible = util.Counter()
         if noisyDistance == None:
             allPossible[self.getJailPosition()] = 1
         else:
             for loc in self.legalPositions:
                 trueDistance = util.manhattanDistance(loc, pacmanPosition)
-                allPossible[loc] = self.beliefs[loc]*emissionModel[trueDistance]
+                if emissionModel[trueDistance] > 0:
+                    allPossible[loc] = self.beliefs[loc]*emissionModel[trueDistance]
+                else:
+                    allPossible[loc]=0
         '''
         allPossible = self.beliefs
         for p in self.legalPositions:
