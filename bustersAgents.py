@@ -133,24 +133,19 @@ class GreedyBustersAgent(BustersAgent):
         First computes the most likely position of each ghost that has
         not yet been captured, then chooses an action that brings
         Pacman closer to the closest ghost (according to mazeDistance!).
-
         To find the mazeDistance between any two positions, use:
           self.distancer.getDistance(pos1, pos2)
-
         To find the successor position of a position after an action:
           successorPosition = Actions.getSuccessor(position, action)
-
         livingGhostPositionDistributions, defined below, is a list of
         util.Counter objects equal to the position belief
         distributions for each of the ghosts that are still alive.  It
         is defined based on (these are implementation details about
         which you need not be concerned):
-
           1) gameState.getLivingGhosts(), a list of booleans, one for each
              agent, indicating whether or not the agent is alive.  Note
              that pacman is always agent 0, so the ghosts are agents 1,
              onwards (just as before).
-
           2) self.ghostBeliefs, the list of belief distributions for each
              of the ghosts (including ghosts that are not alive).  The
              indices into this list should be 1 less than indices into the
@@ -163,23 +158,21 @@ class GreedyBustersAgent(BustersAgent):
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
         "*** YOUR CODE HERE ***"
+        
+        
         ghostPos = util.PriorityQueue()
         for ghost in livingGhostPositionDistributions:
             ghostPosClose = ghost.argMax()
             ghostPos.push(ghostPosClose, self.distancer.getDistance(pacmanPosition, ghostPosClose))
             
         ghostPosClose =ghostPos.pop()
-        
-        maxProb = 0
-        for index, pos in ghostPos:
-            if livingGhostPositionDistributions[index][pos] >= maxProb:
-                ghostDist = pos
-                maxProb = livingGhostPositionDistributions[index][pos]
-        
-        ghostDist = []
+        space = self.distancer.getDistance(pacmanPosition, ghostPosClose)
         pacMoves = gameState.getLegalPacmanActions()
-        for action in pacMoves:
-            PacmanSuccessor = Actions.getSuccessor(pacmanPosition, action)
-            ghostDist.append(self.distancer.getDistance(pacmanPosition, ghostPosClose))
-            
-        return pacMoves[ghostDist.index(min(ghostDist))]
+        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            try:
+                newSpace = self.distancer.getDistance(ghostPosClose, Actions.getSuccessor(pacmanPosition, action))
+                if newSpace < space:
+                    return action
+            except Exception:
+                pass
+        return Directions.STOP
