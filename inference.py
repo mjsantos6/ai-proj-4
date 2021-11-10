@@ -462,54 +462,32 @@ class JointParticleFilter:
         if len(noisyDistances) < self.numGhosts:
             return
         emissionModels = [busters.getObservationDistribution(dist) for dist in noisyDistances]
-        for particleIndex in range(self.numParticles):
-            ghostBelief = 1.0
-            for ghostAgent in range(self.numGhosts):
-                # if noisyDistance is None for ghostAgent, then ghost should appear in its prison cell
-                if noisyDistances[ghostAgent] == None:
-                    self.particles[particleIndex] = self.getParticleWithGhostInJail(self.particles[particleIndex], ghostAgent)
+         "*** YOUR CODE HERE ***"
+        weights = util.Counter()
+        for ghost in range(self.numGhosts):
+            if noisyDistances[ghost] == 0:
+                newParticles = []
+                for p in self.particles:
+                    newParticle = self.getParticleWithGhostInJail(p, ghost)
+                    newParticles.append(newParticle)
+                self.particles = newParticle
+        
+        for particle in self.particles:
+            weight = 1
+            for i in range(self.numGhosts):
+                if noisyDistances[ghost] == 0:
+                    newParticles = []
                 else:
-                    # updating beliefs based on trueDistance of each ghost
-                    trueDistance = util.manhattanDistance(self.particles[particleIndex][ghostAgent], pacmanPosition)
-                    ghostBelief *= emissionModels[ghostAgent][trueDistance]
-            allPossible[self.particles[particleIndex]] += ghostBelief
-
-
-        # if the weights are all zero, resampled from prior
-        if allPossible.totalCount() == 0:
+                    weight = emissionModels[i][util.manhattanDistance(particle[i],pacmanPosition)]
+                    
+        if weights.totalCount() == 0:
             self.initializeParticles()
+            for ghost in range(self.numGhosts):
+                if noisyDistances[ghost] == 0:
+                    for p in range(self.numParticles):
+                        self.particles[p] = self.getParticleWithGhostInJail(self.particles[p])
         else:
-            # otherwise sampled from the allPossible positions
-            allPossible.normalize()
-            newParticle = list()
-            newParticle = [util.sample(allPossible) for i in range(self.numParticles)]
-            self.particles = newParticle
-       
-        # for particleIndex in range(self.numParticles):
-        #     ghostBelief = 1.0
-        #     for ghostAgent in range(self.numGhosts):
-        #         if noisyDistances[ghostAgent] == None:
-        #                 self.particles[particleIndex][ghostAgent] = self.getParticleWithGhostInJail(self.particles[particleIndex][ghostAgent], ghostAgent)
-        #         else:
-        #             trueDistance = util.manhattanDistance(self.particles[particleIndex][ghostAgent], pacmanPosition)
-        #             if emissionModels[ghostAgent][trueDistance] > 0:
-        #                 ghostBelief *= emissionModels[ghostAgent][trueDistance]
-        #     allPossible[self.particles[particleIndex]] += ghostBelief
-    
-
-        # if allPossible.totalCount() == 0:
-        #     self.initializeParticles()
-        #     for index, particle in enumerate(self.particles):
-        #         for i in range(self.numGhosts):
-        #             if noisyDistances[i] == None:
-        #                 particle = self.getParticleWithGhostInJail(particle, i)
-
-        # else:
-        #     allPossible.normalize()
-            # self.particles =[util.sample(allPossible) for i in range(self.numParticles)]
-
-
-        "*** YOUR CODE HERE ***"
+            weights.normalize()
 
     def getParticleWithGhostInJail(self, particle, ghostIndex):
         """
@@ -572,11 +550,11 @@ class JointParticleFilter:
 
     def getBeliefDistribution(self):
         "*** YOUR CODE HERE ***"
-        beliefDistribution = util.Counter()
+        bd = util.Counter()
         for particle in self.particles:
-            beliefDistribution[particle] += 1.0
-        beliefDistribution.normalize()
-        return beliefDistribution
+            bd[particle] += 1
+        bd.normalize()
+        return bd
 
 # One JointInference module is shared globally across instances of MarginalInference
 jointInference = JointParticleFilter()
