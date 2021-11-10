@@ -175,4 +175,8 @@ class GreedyBustersAgent(BustersAgent):
                     return action
             except Exception:
                 pass
+<<<<<<< HEAD
         return Directions.STOP
+=======
+        return Directions.STOP
+>>>>>>> d132cd5a2de82a3d5bca50dffa99ae8bd85b21f2
