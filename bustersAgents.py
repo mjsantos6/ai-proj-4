@@ -159,20 +159,18 @@ class GreedyBustersAgent(BustersAgent):
              if livingGhosts[i+1]]
         "*** YOUR CODE HERE ***"
         
-        
+        #queue most probable positions for living ghosts by closeness
         ghostPos = util.PriorityQueue()
-        for ghost in livingGhostPositionDistributions:
-            ghostPosClose = ghost.argMax()
-            ghostPos.push(ghostPosClose, self.distancer.getDistance(pacmanPosition, ghostPosClose))
+        for ghostBPD in livingGhostPositionDistributions:
+            mostProbPos = ghostBPD.argMax()
+            ghostPos.push(mostProbPos, self.distancer.getDistance(pacmanPosition, mostProbPos))
             
-        ghostPosClose =ghostPos.pop()
-        space = self.distancer.getDistance(pacmanPosition, ghostPosClose)
+        closestGhostPos = ghostPos.pop()
+        dist2ghost = self.distancer.getDistance(pacmanPosition, closestGhostPos)
         pacMoves = gameState.getLegalPacmanActions()
-        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            try:
-                newSpace = self.distancer.getDistance(ghostPosClose, Actions.getSuccessor(pacmanPosition, action))
-                if newSpace < space:
-                    return action
-            except Exception:
-                pass
+        #find an action that gets you closer to closest ghost
+        for action in pacMoves:
+            newDist = self.distancer.getDistance(closestGhostPos, Actions.getSuccessor(pacmanPosition, action))
+            if newDist < dist2ghost:
+                return action
         return Directions.STOP

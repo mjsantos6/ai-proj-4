@@ -462,7 +462,7 @@ class JointParticleFilter:
         if len(noisyDistances) < self.numGhosts:
             return
         emissionModels = [busters.getObservationDistribution(dist) for dist in noisyDistances]
-         "*** YOUR CODE HERE ***"
+        "*** YOUR CODE HERE ***"
         weights = util.Counter()
         for ghost in range(self.numGhosts):
             if noisyDistances[ghost] == 0:
