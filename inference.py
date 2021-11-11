@@ -410,17 +410,14 @@ class JointParticleFilter:
         weight with each position) is incorrect and may produce errors.
         """
         "*** YOUR CODE HERE ***"
-        # list of all legal positions
-        legalPossibleMultiGhostPositions = list(itertools.product(self.legalPositions, repeat=self.numGhosts))
-        # print(itertools.product([5,5,5,5], repeat = 3))
-        # randomly shuffling
-        random.shuffle(legalPossibleMultiGhostPositions)
-        particlePositions = [legalPossibleMultiGhostPositions[i % len(legalPossibleMultiGhostPositions)] for i in range(self.numParticles)]
-        # particlePositions = list()
-        # for i in range(self.numParticles):
-        #             particlePositions.append(legalPossibleMultiGhostPositions)
-        self.particles = particlePositions
-        return self.particles
+        possParticles = list(itertools.product(self.legalPositions, repeat = self.numGhosts))
+        random.shuffle(possParticles)
+        count, self.particles = 0, []
+        while count < self.numParticles:
+            for position in possParticles:
+                if count < self.numParticles:
+                    self.particles.append(position)
+                    count += 1
 
     def addGhostAgent(self, agent):
         """
@@ -457,37 +454,34 @@ class JointParticleFilter:
         """
         pacmanPosition = gameState.getPacmanPosition()
         noisyDistances = gameState.getNoisyGhostDistances()
-        beliefs = self.getBeliefDistribution()
-        allPossible = util.Counter()
         if len(noisyDistances) < self.numGhosts:
             return
         emissionModels = [busters.getObservationDistribution(dist) for dist in noisyDistances]
         "*** YOUR CODE HERE ***"
-        weights = util.Counter()
-        for ghost in range(self.numGhosts):
-            if noisyDistances[ghost] == 0:
-                newParticles = []
-                for p in self.particles:
-                    newParticle = self.getParticleWithGhostInJail(p, ghost)
-                    newParticles.append(newParticle)
-                self.particles = newParticle
-        
-        for particle in self.particles:
-            weight = 1
+        possible = util.Counter()
+        for particleIndex in range(self.numParticles):
+            weight = 1.0
             for i in range(self.numGhosts):
-                if noisyDistances[ghost] == 0:
-                    newParticles = []
+                if noisyDistances[i] == None:
+                    #ghost has been eaten
+                    self.particles[particleIndex] = self.getParticleWithGhostInJail(self.particles[particleIndex], i)
                 else:
-                    weight = emissionModels[i][util.manhattanDistance(particle[i],pacmanPosition)]
-                    
-        if weights.totalCount() == 0:
+                    # updating beliefs based on trueDistance of each ghost
+                    trueDistance = util.manhattanDistance(self.particles[particleIndex][i], pacmanPosition)
+                    weight *= emissionModels[i][trueDistance]
+            possible[self.particles[particleIndex]] += weight
+
+
+        # if the weights are all zero, resampled from prior
+        if possible.totalCount() == 0:
             self.initializeParticles()
-            for ghost in range(self.numGhosts):
-                if noisyDistances[ghost] == 0:
-                    for p in range(self.numParticles):
-                        self.particles[p] = self.getParticleWithGhostInJail(self.particles[p])
         else:
-            weights.normalize()
+            # otherwise sampled from the allPossible positions
+            possible.normalize()
+            #newParticle = list()
+            newParticle = [util.sample(possible) for i in range(self.numParticles)]
+            self.particles = newParticle
+
 
     def getParticleWithGhostInJail(self, particle, ghostIndex):
         """
