@@ -252,12 +252,7 @@ class ParticleFilter(InferenceModule):
         weight with each position) is incorrect and may produce errors.
         """
         "*** YOUR CODE HERE ***"
-        self.particles = list()
-        # list of all possible position a ghost can take
-        legalPositions = self.legalPositions
-        # setting particle possible positions
-        particlePositions = [self.legalPositions[i%len(self.legalPositions)] for i in range(self.numParticles)]
-        self.particles = particlePositions
+        self.particles = [self.legalPositions[i%len(self.legalPositions)] for i in range(self.numParticles)]
         return self.particles
 
 
@@ -287,24 +282,23 @@ class ParticleFilter(InferenceModule):
         emissionModel = busters.getObservationDistribution(noisyDistance)
         pacmanPosition = gameState.getPacmanPosition()
         "*** YOUR CODE HERE ***"
-        
-        
-        allPossible = util.Counter()
-        # if pacman ate the ghost then the particle position is jail position of the ghost
+        weights = util.Counter()
         if noisyDistance == None:
-                self.particles = [self.getJailPosition() for i in range(self.numParticles)]
+            #da ghost got ate
+            for i in range(self.numParticles):
+                self.particles = [self.getJailPosition()]
         else:
-           # otherwise the belief is updated as per the trueDistance same as the exactInference class
+           # otherwise update beliefs for ghosts
             beliefs = self.getBeliefDistribution()
-            for p in self.legalPositions:
-                trueDistance = util.manhattanDistance(p, pacmanPosition)
-                if emissionModel[trueDistance] > 0:
-                    allPossible[p] = emissionModel[trueDistance]*beliefs[p]
+            for pos in self.legalPositions:
+                dist = util.manhattanDistance(pos, pacmanPosition)
+                if emissionModel[dist] > 0:
+                    weights[pos] = emissionModel[dist]*beliefs[pos]
 
-            if allPossible.totalCount() == 0:
+            if weights.totalCount() == 0:
                 self.initializeUniformly(gameState)
             else:
-                self.particles =[util.sample(allPossible) for i in range(self.numParticles)]
+                self.particles =[util.sample(weights) for i in range(self.numParticles)]
 
     def elapseTime(self, gameState):
         """
@@ -334,8 +328,10 @@ class ParticleFilter(InferenceModule):
         essentially converts a list of particles into a belief distribution (a
         Counter object)
         """
-
+        #  counter for storing current belief distribution
         beliefDistribution = util.Counter()
+        #  since the belief is that ghost are uniformally distributed accross legal positions
+        # setting the belief to 1.0, meaning the particle can be anywhere in the grid.
         for particle in self.particles: beliefDistribution[particle] += 1.0
         beliefDistribution.normalize()
         return beliefDistribution
@@ -458,27 +454,25 @@ class JointParticleFilter:
         "*** YOUR CODE HERE ***"
         possible = util.Counter()
         for particleIndex in range(self.numParticles):
-            weight = 1.0
+            weight = 1
             for i in range(self.numGhosts):
                 if noisyDistances[i] == None:
                     #ghost has been eaten
                     self.particles[particleIndex] = self.getParticleWithGhostInJail(self.particles[particleIndex], i)
                 else:
-                    # updating beliefs based on trueDistance of each ghost
-                    trueDistance = util.manhattanDistance(self.particles[particleIndex][i], pacmanPosition)
-                    weight *= emissionModels[i][trueDistance]
+                    #update beliefs if we still need to worry about that ghost
+                    weight *= emissionModels[i][util.manhattanDistance(self.particles[particleIndex][i], pacmanPosition)]
             possible[self.particles[particleIndex]] += weight
 
 
-        # if the weights are all zero, resampled from prior
+        #resample if weights are zero
         if possible.totalCount() == 0:
             self.initializeParticles()
         else:
-            # otherwise sampled from the allPossible positions
+            #sample from possible positions
             possible.normalize()
-            #newParticle = list()
-            newParticle = [util.sample(possible) for i in range(self.numParticles)]
-            self.particles = newParticle
+            newParticles = [util.sample(possible) for i in range(self.numParticles)]
+            self.particles = newParticles
 
 
     def getParticleWithGhostInJail(self, particle, ghostIndex):
