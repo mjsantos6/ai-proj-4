@@ -334,10 +334,8 @@ class ParticleFilter(InferenceModule):
         essentially converts a list of particles into a belief distribution (a
         Counter object)
         """
-        #  counter for storing current belief distribution
+
         beliefDistribution = util.Counter()
-        #  since the belief is that ghost are uniformally distributed accross legal positions
-        # setting the belief to 1.0, meaning the particle can be anywhere in the grid.
         for particle in self.particles: beliefDistribution[particle] += 1.0
         beliefDistribution.normalize()
         return beliefDistribution
