@@ -239,7 +239,6 @@ class ParticleFilter(InferenceModule):
     def setNumParticles(self, numParticles):
         self.numParticles = numParticles
 
-
     def initializeUniformly(self, gameState):
         """
         Initializes a list of particles. Use self.numParticles for the number of
@@ -252,6 +251,8 @@ class ParticleFilter(InferenceModule):
         weight with each position) is incorrect and may produce errors.
         """
         "*** YOUR CODE HERE ***"
+        # set particles based on ghost positions
+        self.particles = list()
         self.particles = [self.legalPositions[i%len(self.legalPositions)] for i in range(self.numParticles)]
         return self.particles
 
@@ -285,8 +286,7 @@ class ParticleFilter(InferenceModule):
         weights = util.Counter()
         if noisyDistance == None:
             #da ghost got ate
-            for i in range(self.numParticles):
-                self.particles = [self.getJailPosition()]
+                self.particles = [self.getJailPosition() for i in range(self.numParticles)]
         else:
            # otherwise update beliefs for ghosts
             beliefs = self.getBeliefDistribution()
